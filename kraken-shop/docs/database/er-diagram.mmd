@@ -1,0 +1,125 @@
+erDiagram
+    Users ||--o{ Sessions : "входит"
+    Games ||--o{ Categories : "содержит"
+    Categories ||--o{ Listings : "включает"
+    Users ||--o{ Listings : "продаёт"
+    Listings ||--o{ Conversations : "обсуждают"
+    Users ||--o{ Conversations : "покупатель / продавец"
+    Conversations ||--o{ Messages : "содержит"
+    Users |o--o{ Messages : "пишет (NULL = система)"
+    Conversations ||--o{ Orders : "сделки в чате"
+    Listings ||--o{ Orders : "покупают"
+    Users ||--o{ Orders : "покупатель / продавец"
+    Orders ||--o| Reviews : "отзыв"
+    Users ||--o{ Reviews : "автор / продавец"
+    Users ||--o{ Transactions : "кошелёк"
+    Orders |o--o{ Transactions : "оплата"
+    Users |o--o{ News : "автор"
+
+    Users {
+        INT UserId PK
+        NVARCHAR(32) Username UK "Nickname"
+        NVARCHAR(255) Email UK
+        NVARCHAR(255) PasswordHash "scrypt"
+        NVARCHAR(255) SpecialCodeHash "NULL"
+        NVARCHAR(100) RealName "NULL"
+        NVARCHAR(MAX) AvatarDataUrl "NULL"
+        DECIMAL(12_2) Balance ">= 0"
+        DATETIME2 CreatedAt
+        DATETIME2 UpdatedAt
+    }
+    Sessions {
+        INT SessionId PK
+        INT UserId FK
+        CHAR(64) TokenHash UK
+        DATETIME2 CreatedAt
+        DATETIME2 ExpiresAt
+    }
+    Games {
+        INT GameId PK
+        NVARCHAR(100) Name UK
+        VARCHAR(50) Slug UK
+        VARCHAR(10) Section "game | service"
+        NVARCHAR(500) Description "NULL"
+        INT SortOrder
+    }
+    Categories {
+        INT CategoryId PK
+        INT GameId FK
+        NVARCHAR(100) Name
+        VARCHAR(50) Slug "UK with GameId"
+        VARCHAR(10) Kind "item|currency|account|service|giftcard|app"
+    }
+    Listings {
+        INT ListingId PK
+        INT SellerId FK
+        INT CategoryId FK
+        NVARCHAR(120) Title
+        NVARCHAR(2000) Description "NULL"
+        DECIMAL(12_2) Price "> 0"
+        INT Quantity ">= 0"
+        NVARCHAR(MAX) ImageDataUrl "NULL"
+        VARCHAR(10) Status "active|sold|closed"
+        DATETIME2 CreatedAt
+        DATETIME2 UpdatedAt
+    }
+    Conversations {
+        INT ConversationId PK
+        INT ListingId FK "UK with BuyerId"
+        INT BuyerId FK
+        INT SellerId FK
+        DATETIME2 SupportRequestedAt "NULL"
+        DATETIME2 CreatedAt
+        DATETIME2 LastMessageAt
+    }
+    Messages {
+        BIGINT MessageId PK
+        INT ConversationId FK
+        INT SenderId FK "NULL"
+        NVARCHAR(1000) Text "NULL"
+        NVARCHAR(MAX) AttachmentDataUrl "NULL"
+        DATETIME2 CreatedAt
+    }
+    Orders {
+        INT OrderId PK
+        INT ListingId FK
+        INT ConversationId FK
+        INT BuyerId FK
+        INT SellerId FK
+        INT Quantity
+        DECIMAL(12_2) UnitPrice
+        DECIMAL(12_2) TotalPrice "computed"
+        VARCHAR(10) Status "paid|completed|disputed|refunded"
+        DATETIME2 CreatedAt
+        DATETIME2 ClosedAt "NULL"
+    }
+    Transactions {
+        BIGINT TransactionId PK
+        INT UserId FK
+        INT OrderId FK "NULL"
+        DECIMAL(12_2) Amount
+        VARCHAR(10) Type "deposit|purchase|sale|refund"
+        DECIMAL(12_2) BalanceAfter
+        DATETIME2 CreatedAt
+    }
+    Reviews {
+        INT ReviewId PK
+        INT OrderId FK,UK
+        INT AuthorId FK
+        INT SellerId FK
+        TINYINT Rating "1..5"
+        NVARCHAR(1000) Text "NULL"
+        DATETIME2 CreatedAt
+    }
+    News {
+        INT NewsId PK
+        INT AuthorId FK "NULL"
+        NVARCHAR(200) Title
+        NVARCHAR(4000) Body
+        DATETIME2 PublishedAt
+    }
+    ExchangeRates {
+        CHAR(3) CurrencyCode PK
+        DECIMAL(12_4) RateRub
+        DATETIME2 UpdatedAt
+    }
